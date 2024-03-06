@@ -1,12 +1,9 @@
-// ignore_for_file: prefer_const_constructors_in_immutables, use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_company2/fluttertoast.dart';
 import 'package:my_company2/models.dart';
 import 'package:my_company2/comapnies/editComapnyTile.dart';
 import 'package:my_company2/comapnies/addComapnyTile.dart';
-
 
 class CompanyPage extends StatefulWidget {
   final String groupId;
@@ -19,9 +16,9 @@ class CompanyPage extends StatefulWidget {
 }
 
 class _CompanyPageState extends State<CompanyPage> {
+  int? selectedCompanyIndex;
 
-  
- Future<void> confirmDeleteCompany(String companyId, String companyName) async {
+  Future<void> confirmDeleteCompany(String companyId, String companyName) async {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -61,7 +58,6 @@ class _CompanyPageState extends State<CompanyPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,41 +90,51 @@ class _CompanyPageState extends State<CompanyPage> {
             itemCount: companyList.length,
             itemBuilder: (context, index) {
               return ListTile(
+                tileColor: selectedCompanyIndex == index ? Colors.grey : null,
+                onTap: () {
+                  setState(() {
+                    // Toggle the selected index
+                    selectedCompanyIndex =
+                        selectedCompanyIndex == index ? null : index;
+                  });
+                },
                 leading: Image.network(companyList[index].companyLogo),
                 title: Text(companyList[index].companyName),
                 subtitle: Text('Additional company details'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return EditCompanyDialog(
-                              groupId: widget.groupId,
-                              companyId: snapshot.data!.docs[index].id,
-                              companyName: companyList[index].companyName,
-                              companyLogo: companyList[index].companyLogo,
-                              onCompanyUpdated: () =>
-                              widget.onGroupUpdated(),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                     IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () {
-                  confirmDeleteCompany(
-                      snapshot.data!.docs[index].id,
-                      companyList[index].companyName,
-                  );
-                },
-              ),
-                  ],
-                ),
+                trailing: selectedCompanyIndex == index
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return EditCompanyDialog(
+                                    groupId: widget.groupId,
+                                    companyId: snapshot.data!.docs[index].id,
+                                    companyName: companyList[index].companyName,
+                                    companyLogo: companyList[index].companyLogo,
+                                    onCompanyUpdated: () =>
+                                        widget.onGroupUpdated(),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () {
+                              confirmDeleteCompany(
+                                snapshot.data!.docs[index].id,
+                                companyList[index].companyName,
+                              );
+                            },
+                          ),
+                        ],
+                      )
+                    : null,
               );
             },
           );
@@ -140,7 +146,9 @@ class _CompanyPageState extends State<CompanyPage> {
             context: context,
             builder: (BuildContext context) {
               return AddCompanyDialog(
-                  groupId: widget.groupId, onGroupUpdated: () => widget.onGroupUpdated());
+                groupId: widget.groupId,
+                onGroupUpdated: () => widget.onGroupUpdated(),
+              );
             },
           );
         },

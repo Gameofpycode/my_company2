@@ -137,6 +137,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void navigateToCompanyPage(String groupId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CompanyPage(
+          groupId: groupId,
+          onGroupUpdated: () =>
+              updateGroupLength(groups.doc(groupId)),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,65 +178,63 @@ class _HomePageState extends State<HomePage> {
           return ListView.builder(
             itemCount: groupOfCompanies.length,
             itemBuilder: (context, index) {
+              bool isSelected = selectedTileIndex == index;
+
               return GestureDetector(
                 onTap: () {
                   setState(() {
                     // Toggle selection
-                    selectedTileIndex =
-                        (selectedTileIndex == index) ? -1 : index;
+                    selectedTileIndex = isSelected ? -1 : index;
                   });
                 },
                 onDoubleTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CompanyPage(
-                        groupId: snapshot.data!.docs[index].id,
-                        onGroupUpdated: () =>
-                            updateGroupLength(groups.doc(snapshot.data!.docs[index].id)),
-                      ),
-                    ),
-                  );
+                  navigateToCompanyPage(snapshot.data!.docs[index].id);
                 },
-                child: ListTile(
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('Add logo here'),
+                child: Container(
+                  color: isSelected ? Colors.blue.withOpacity(0.3) : null,
+                  child: ListTile(
+                    leading: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text('Add logo here'),
+                    ),
+                    title: Text(groupOfCompanies[index].groupName),
+                    subtitle: Text(
+                        'Companies: ${groupOfCompanies[index].groupLength}'),
+                    trailing: (isSelected)
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return EditGroupDialog(
+                                        groupId: snapshot.data!.docs[index].id,
+                                        groupName:
+                                            groupOfCompanies[index].groupName,
+                                        groupLogo:
+                                            groupOfCompanies[index].groupLogo,
+                                        onGroupUpdated: (groupRef) =>
+                                            updateGroupLength(groupRef),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: () {
+                                  showDeleteConfirmationDialog(
+                                      snapshot.data!.docs[index].id,
+                                      groupOfCompanies[index].groupName);
+                                },
+                              ),
+                            ],
+                          )
+                        : null,
                   ),
-                  title: Text(groupOfCompanies[index].groupName),
-                  subtitle: Text('Companies: ${groupOfCompanies[index].groupLength}'),
-                  trailing: (selectedTileIndex == index)
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return EditGroupDialog(
-                                      groupId: snapshot.data!.docs[index].id,
-                                      groupName: groupOfCompanies[index].groupName,
-                                      groupLogo: groupOfCompanies[index].groupLogo,
-                                      onGroupUpdated: (groupRef) =>
-                                          updateGroupLength(groupRef),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () {
-                                showDeleteConfirmationDialog(
-                                    snapshot.data!.docs[index].id,
-                                    groupOfCompanies[index].groupName);
-                              },
-                            ),
-                          ],
-                        )
-                      : null,
                 ),
               );
             },
